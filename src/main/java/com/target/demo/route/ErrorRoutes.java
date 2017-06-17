@@ -17,4 +17,9 @@ public class ErrorRoutes {
     public ResponseEntity<CustomError> validationRouter(Exception e){
         return new ResponseEntity(new CustomError(HttpStatus.BAD_REQUEST.name(),"input is not valid"),HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<CustomError> validationRouter2(Exception e){
+        return new ResponseEntity(new CustomError(HttpStatus.BAD_REQUEST.name(),e.getLocalizedMessage()),HttpStatus.BAD_REQUEST);
+    }
 }

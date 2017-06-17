@@ -4,13 +4,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.target.demo.client.TargetApiClient;
 import com.target.demo.entity.ProductEntity;
 import com.target.demo.entity.ProductMapper;
+import com.target.demo.model.CustomError;
 import com.target.demo.model.Product;
 import com.target.demo.repository.ProductRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -29,7 +32,7 @@ public class ProductService {
     private TargetApiClient apiClient;
 
     public Product getProduct(Long id) {
-        Product product = null;
+        Optional<Product> product = Optional.empty();
         CompletableFuture<String> getName = CompletableFuture.supplyAsync(() -> {
             logger.info("getting product name against id");
             JsonNode json = apiClient.getPriceData(id);
@@ -41,11 +44,11 @@ public class ProductService {
         });
         CompletableFuture<Product> getProduct = getName.thenCombine(getPrice,(productName,productEntity) -> mapper.toProduct(productRepository.save(productEntity), productName));
         try {
-           product = getProduct.get();
+           product = Optional.of(getProduct.get());
         } catch (InterruptedException|ExecutionException e) {
             logger.error(e.getMessage());
         }
-        return product;
+        return product.orElseThrow(() -> new IllegalArgumentException("No product found against id"));
     }
 
     public Product updateProduct(Long id, Product product) {
